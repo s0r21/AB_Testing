@@ -1,1 +1,63 @@
+import matplotlib.pyplot as plt
+import scipy.stats as stats
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
+# importing the dataset (link = https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016)
+df = pd.read_csv('/Users/Admin/Downloads/master.csv')
+Column_names = df.columns.tolist()
+# print(np.transpose(Column_names))
+# Looking at Canadian suicide numbers in comparison with the world.
+# Using a one-sided hypothesis test to see if the number of suicides
+# in Canada are statistically higher than the world.
+
+World_Data = df[['country',
+                 'suicides_no']] \
+    .where(df.country != 'Canada') \
+    .dropna()
+
+Canada_Data = df[['country',
+                  'suicides_no']] \
+    .where(df.country == 'Canada') \
+    .dropna() \
+    .reset_index() \
+    .drop('index',
+          axis = 1)
+
+# Visually checking for normality.
+sns.distplot(Canada_Data.suicides_no)
+plt.show()
+
+# The data is not normal for our sample size. Just to double check, will run a hypothesis test to confirm.
+# Doing this by using a K^2 test
+test_statistic, pval = stats.normaltest(Canada_Data.suicides_no)
+print('Since ' + str(pval) + ' pval < 0.05, we reject the NULL and state that our distribution is NOT normal')
+
+# test2, pval2 = stats.normaltest(norm_Sample)
+# print(pval2)
+
+# Population Statistics
+MU, SD = np.mean(World_Data.suicides_no), \
+         np.std(World_Data.suicides_no)
+
+# Sample Statistics
+Xbar, N = np.mean(Canada_Data.suicides_no), \
+          len(Canada_Data.suicides_no)
+
+# Since we have the population data, we can use a Z-Test (95% CI = 0.05 alpha).
+# We are going to test whether Canada's suicide numbers are statistically higher than the world.
+# H0: Xbar = Mu
+# H1: Xbar > Mu
+# 1.64 is our Z-Crit value
+
+Z = (Xbar - MU) / (SD / np.sqrt(N))
+
+if Z >= 1.64:
+    print('H1 holds. Our sample mean is statistically greater than our population mean. '
+          'The number of suicides in Canada are statistically greater than the number of '
+          'suicides in the world.')
+elif Z < 1.64:
+    print('H0 holds. Our sample mean is not statistically greater than our population mean. '
+          'The number of suicides in Canada are not statistically greater than the number of '
+          'suicides in the world.')
